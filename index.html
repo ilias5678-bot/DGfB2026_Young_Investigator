@@ -24,4 +24,46 @@
         .success { text-align: center; padding: 40px 20px; }
         option:disabled { color: #ccc; }
         .already-voted { color: #dc2626; text-align: center; font-weight: bold; padding: 20px; }
-        .test-info { background: #ffedd5; border: 1px solid #fb923
+        
+        /* Hier war der Fehler - jetzt korrigiert: */
+        .test-info { background: #ffedd5; border: 1px solid #fb923c; padding: 10px; border-radius: 8px; color: #9a3412; font-size: 0.8rem; margin-bottom: 15px; text-align: center; }
+    </style>
+</head>
+<body>
+
+<div class="card" id="formBox">
+    <img src="https://biomechanik-kongress.de/wp-content/uploads/sites/26/2025/04/DGfB-banner-final-version.png" alt="DGfB Banner" class="banner">
+    
+    <div class="content" id="mainContent">
+        <div class="test-info">⚠️ TESTMODUS: Gerätesperre ist deaktiviert.</div>
+        <h2>Young Investigator Award</h2>
+        <p class="subtitle">Bringen Sie die Vorträge in Ihre Reihenfolge (1 = Favorit).</p>
+        
+        <form id="votingForm">
+            <div class="section-title">Ihre Bewertung</div>
+            <div class="rank-top"><label>1. Platz</label><select id="p1" class="vote-select" required><option value="">Wählen...</option></select></div>
+            <div class="rank-top"><label>2. Platz</label><select id="p2" class="vote-select" required><option value="">Wählen...</option></select></div>
+            <div class="rank-top"><label>3. Platz</label><select id="p3" class="vote-select" required><option value="">Wählen...</option></select></div>
+            <div class="rank-mid"><label>4. Platz</label><select id="p4" class="vote-select" required><option value="">Wählen...</option></select></div>
+            <div class="rank-mid"><label>5. Platz</label><select id="p5" class="vote-select" required><option value="">Wählen...</option></select></div>
+            <div class="rank-mid"><label>6. Platz</label><select id="p6" class="vote-select" required><option value="">Wählen...</option></select></div>
+            <button type="submit" id="submitBtn" disabled>Ranking absenden</button>
+        </form>
+    </div>
+</div>
+
+<div class="card hidden success" id="successBox">
+    <div style="font-size: 50px; color: #10b981; margin-bottom: 20px; text-align: center;">✓</div>
+    <h2>Vielen Dank!</h2>
+    <p style="text-align: center;">Ihr Ranking wurde erfolgreich übermittelt.</p>
+    <button onclick="location.reload()" style="background: #e2e8f0; color: #475569; margin-top: 20px; padding: 10px; width: auto; display: inline-block;">Nochmal testen</button>
+</div>
+
+<script>
+    const vortraege = [
+        "JONAS EBBECKE | Fatigue-weighted cumulative knee joint loading...",
+        "JONAS WALTER METZGER | Physiologische Muskelkräfte & Meniskurisse",
+        "LEA MARIE-SOPHIE CORDES | Paraspinale Muskeldegeneration",
+        "MARCEL SIMON REICH | Lumbalen Wirbelsäulenfusion im Tiermodell",
+        "ALEXANDER WEISS | Bottom turns after pop up in surfing",
+        "KILIAN RICHTHOFER | Self-stabilizing osteotom
