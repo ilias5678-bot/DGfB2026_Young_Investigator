@@ -20,16 +20,18 @@
         button:disabled { background: #9ca3af; cursor: not-allowed; opacity: 0.6; }
         .hidden { display: none; }
         .success { text-align: center; padding: 40px 20px; }
+        .already-voted { color: #dc2626; text-align: center; font-weight: bold; padding: 20px; background: #fee2e2; border-radius: 10px; margin-top: 10px; }
     </style>
 </head>
 <body>
 
 <div class="card" id="formBox">
     <img src="https://biomechanik-kongress.de/wp-content/uploads/sites/26/2025/04/DGfB-banner-final-version.png" alt="Banner" class="banner">
-    <div class="content">
+    <div class="content" id="mainContent">
         <h2>Young Investigator Award</h2>
         <p class="subtitle">1. Platz = 6 Pkt, 6. Platz = 1 Pkt</p>
         <form id="votingForm">
+            <div class="section-title">Ihre Bewertung</div>
             <div class="rank-top"><label>1. Platz (6 Pkt)</label><select id="p1" class="vote-select" required></select></div>
             <div class="rank-top"><label>2. Platz (5 Pkt)</label><select id="p2" class="vote-select" required></select></div>
             <div class="rank-top"><label>3. Platz (4 Pkt)</label><select id="p3" class="vote-select" required></select></div>
@@ -42,9 +44,9 @@
 </div>
 
 <div class="card hidden success" id="successBox">
+    <div style="font-size: 50px; color: #10b981; margin-bottom: 20px;">✓</div>
     <h2>Vielen Dank!</h2>
-    <p>Ihre Stimme wurde gezählt.</p>
-    <button onclick="location.reload()">Nächster Test</button>
+    <p>Ihre Stimme wurde erfolgreich gezählt.</p>
 </div>
 
 <script>
@@ -53,12 +55,21 @@
         "MARCEL SIMON REICH", "ALEXANDER WEISS", "KILIAN RICHTHOFER"
     ];
 
-    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbz9AAaspE_PeCICzwJV8Rd5DCh4FlXxhmaTYfLz-sAheocdXTnZQvcB3_74h6NvxK8/exec"; // BITTE URL HIER EINSETZEN
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbz9AAaspE_PeCICzwJV8Rd5DCh4FlXxhmaTYfLz-sAheocdXTnZQvcB3_74h6NvxK8/exec";
+    const VOTE_KEY = "dgfb_2026_final_vote"; // Eindeutiger Schlüssel für die Sperre
 
     const selects = document.querySelectorAll('.vote-select');
     const submitBtn = document.getElementById('submitBtn');
+    const mainContent = document.getElementById('mainContent');
 
     function init() {
+        // 1. Prüfen, ob bereits abgestimmt wurde
+        if (localStorage.getItem(VOTE_KEY)) {
+            showAlreadyVoted();
+            return;
+        }
+
+        // 2. Dropdowns befüllen
         selects.forEach(select => {
             select.innerHTML = '<option value="">Wählen...</option>';
             vortraege.forEach(v => {
@@ -69,6 +80,16 @@
             });
             select.addEventListener('change', updateDropdowns);
         });
+    }
+
+    function showAlreadyVoted() {
+        mainContent.innerHTML = `
+            <h2>Hinweis</h2>
+            <div class="already-voted">Sie haben bereits abgestimmt.</div>
+            <p style="text-align:center; font-size: 0.85rem; color: #666; margin-top: 15px;">
+                Pro Gerät ist nur eine Teilnahme am Young Investigator Award Voting vorgesehen.
+            </p>
+        `;
     }
 
     function updateDropdowns() {
@@ -87,8 +108,8 @@
     document.getElementById('votingForm').addEventListener('submit', function(e) {
         e.preventDefault();
         submitBtn.disabled = true;
+        submitBtn.innerText = "Wird gesendet...";
 
-        // Wir erstellen ein Objekt, in dem jeder Name seinen Punktwert erhält
         const results = {};
         vortraege.forEach(v => results[v] = 0);
         
@@ -109,8 +130,13 @@
             mode: 'no-cors',
             body: JSON.stringify(payload)
         }).then(() => {
+            // SPERRE SETZEN
+            localStorage.setItem(VOTE_KEY, "true");
             document.getElementById('formBox').classList.add('hidden');
             document.getElementById('successBox').classList.remove('hidden');
+        }).catch(() => {
+            alert("Fehler beim Senden. Bitte versuchen Sie es erneut.");
+            submitBtn.disabled = false;
         });
     });
 
