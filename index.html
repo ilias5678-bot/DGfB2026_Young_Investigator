@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DGfB 2026 Smart Ranking</title>
+    <title>DGfB 2026 Ranking</title>
     <style>
         body { font-family: -apple-system, sans-serif; background: #f0f2f5; display: flex; justify-content: center; padding: 10px; line-height: 1.4; }
         .card { background: white; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 500px; overflow: hidden; }
@@ -23,6 +23,7 @@
         .hidden { display: none; }
         .success { text-align: center; padding: 40px 20px; }
         option:disabled { color: #ccc; }
+        .already-voted { color: #dc2626; text-align: center; font-weight: bold; padding: 20px; }
     </style>
 </head>
 <body>
@@ -30,12 +31,12 @@
 <div class="card" id="formBox">
     <img src="https://biomechanik-kongress.de/wp-content/uploads/sites/26/2025/04/DGfB-banner-final-version.png" alt="DGfB Banner" class="banner">
     
-    <div class="content">
+    <div class="content" id="mainContent">
         <h2>Vortrags-Ranking</h2>
-        <p class="subtitle">Wählen Sie für jeden Platz einen Vortrag aus. Bereits gewählte Vorträge werden für andere Plätze gesperrt.</p>
+        <p class="subtitle">Wählen Sie für jeden Platz einen Vortrag aus. Pro Gerät ist nur eine Teilnahme möglich.</p>
         
         <form id="votingForm">
-            <div class="section-title">Reihenfolge festlegen (1=Beste)</div>
+            <div class="section-title">Ihre Reihenfolge (1 = Favorit)</div>
 
             <div class="rank-top"><label>1. Platz</label><select id="p1" class="vote-select" required><option value="">Wählen...</option></select></div>
             <div class="rank-top"><label>2. Platz</label><select id="p2" class="vote-select" required><option value="">Wählen...</option></select></div>
@@ -66,13 +67,20 @@
         "Vortrag 6: Titel (Name)"
     ];
 
-    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzDgvp96Fo9UvZ4tgvsWfM6vc6SirET1YMNMHvAjm-9ZW1i6BGkSzqP7u4hjXJCAh8/exec";
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbx4SW_JypfUdeD2ZBGWR33EcTZBwLnWFr_NtanXmapREr3guJBWgMcVXFAoRoY5qtc/exec";
+    const VOTE_KEY = "dgfb_2026_voted";
 
     const selects = document.querySelectorAll('.vote-select');
     const submitBtn = document.getElementById('submitBtn');
+    const mainContent = document.getElementById('mainContent');
 
-    // Initialisierung: Alle Optionen in alle Selects schreiben
     window.onload = () => {
+        // Prüfung: Hat dieses Gerät schon gevotet?
+        if (localStorage.getItem(VOTE_KEY)) {
+            showAlreadyVoted();
+            return;
+        }
+
         selects.forEach(select => {
             vortraege.forEach(v => {
                 const opt = document.createElement('option');
@@ -84,30 +92,30 @@
         });
     };
 
+    function showAlreadyVoted() {
+        mainContent.innerHTML = `
+            <h2>Hinweis</h2>
+            <div class="already-voted">Sie haben mit diesem Gerät bereits abgestimmt.</div>
+            <p style="text-align:center; font-size: 0.8rem; color: #666;">Pro Teilnehmer ist nur eine Stimmabgabe vorgesehen.</p>
+        `;
+    }
+
     function updateDropdowns() {
-        // 1. Alle aktuell gewählten Werte sammeln
         const selectedValues = Array.from(selects).map(s => s.value).filter(v => v !== "");
 
-        // 2. Jedes Dropdown durchgehen
         selects.forEach(select => {
             const currentValue = select.value;
-            
-            // Alle Optionen innerhalb dieses Dropdowns prüfen
             Array.from(select.options).forEach(option => {
-                if (option.value === "") return; // "Wählen..." überspringen
-
-                // Wenn der Wert in einem ANDEREN Dropdown gewählt wurde, hier deaktivieren
+                if (option.value === "") return;
                 if (selectedValues.includes(option.value) && option.value !== currentValue) {
                     option.disabled = true;
-                    option.style.display = "none"; // Optional: Verstecken für bessere Übersicht
+                    option.style.display = "none";
                 } else {
                     option.disabled = false;
                     option.style.display = "block";
                 }
             });
         });
-
-        // 3. Button nur aktivieren, wenn alle 6 Plätze eindeutig belegt sind
         submitBtn.disabled = selectedValues.length !== 6;
     }
 
@@ -121,7 +129,7 @@
             p4: document.getElementById('p4').value,
             p5: document.getElementById('p5').value,
             p6: document.getElementById('p6').value,
-            timestamp: new Date().toISOString()
+            timestamp: new Date().toLocaleString('de-DE')
         };
 
         submitBtn.disabled = true;
@@ -132,10 +140,12 @@
             mode: 'no-cors',
             body: JSON.stringify(data)
         }).then(() => {
+            // Erfolg: Flag im Browser setzen
+            localStorage.setItem(VOTE_KEY, "true");
             document.getElementById('formBox').classList.add('hidden');
             document.getElementById('successBox').classList.remove('hidden');
         }).catch((err) => {
-            alert("Fehler beim Senden.");
+            alert("Fehler beim Senden. Bitte Internetverbindung prüfen.");
             submitBtn.disabled = false;
             submitBtn.innerText = "Ranking absenden";
         });
