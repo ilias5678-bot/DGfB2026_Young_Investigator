@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DGfB 2026 Smart Ranking</title>
+    <style>
+        body { font-family: -apple-system, sans-serif; background: #f0f2f5; display: flex; justify-content: center; padding: 10px; line-height: 1.4; }
+        .card { background: white; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 500px; overflow: hidden; }
+        .banner { width: 100%; height: auto; display: block; }
+        .content { padding: 20px; }
+        h2 { margin: 10px 0 5px; color: #1a1a1a; text-align: center; font-size: 1.3rem; }
+        .subtitle { color: #666; font-size: 0.85rem; text-align: center; margin-bottom: 20px; }
+        .section-title { background: #e2e8f0; padding: 8px; border-radius: 5px; margin: 20px 0 10px; font-weight: bold; font-size: 0.9rem; color: #1e293b; }
+        label { display: block; margin-top: 12px; font-weight: 600; font-size: 0.85rem; color: #374151; }
+        select, button { width: 100%; padding: 10px; margin-top: 5px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 14px; box-sizing: border-box; }
+        
+        .rank-top { border-left: 5px solid #ffd700; padding-left: 10px; margin-bottom: 10px; }
+        .rank-mid { border-left: 5px solid #94a3b8; padding-left: 10px; margin-bottom: 10px; }
+
+        button { background: #005596; color: white; border: none; font-weight: bold; cursor: pointer; margin-top: 25px; padding: 15px; transition: 0.3s; }
+        button:disabled { background: #9ca3af; cursor: not-allowed; opacity: 0.6; }
+        .hidden { display: none; }
+        .success { text-align: center; padding: 40px 20px; }
+        option:disabled { color: #ccc; }
+    </style>
+</head>
+<body>
+
+<div class="card" id="formBox">
+    <img src="https://biomechanik-kongress.de/wp-content/uploads/sites/26/2025/04/DGfB-banner-final-version.png" alt="DGfB Banner" class="banner">
+    
+    <div class="content">
+        <h2>Vortrags-Ranking</h2>
+        <p class="subtitle">Wählen Sie für jeden Platz einen Vortrag aus. Bereits gewählte Vorträge werden für andere Plätze gesperrt.</p>
+        
+        <form id="votingForm">
+            <div class="section-title">Reihenfolge festlegen (1=Beste)</div>
+
+            <div class="rank-top"><label>1. Platz</label><select id="p1" class="vote-select" required><option value="">Wählen...</option></select></div>
+            <div class="rank-top"><label>2. Platz</label><select id="p2" class="vote-select" required><option value="">Wählen...</option></select></div>
+            <div class="rank-top"><label>3. Platz</label><select id="p3" class="vote-select" required><option value="">Wählen...</option></select></div>
+            
+            <div class="rank-mid"><label>4. Platz</label><select id="p4" class="vote-select" required><option value="">Wählen...</option></select></div>
+            <div class="rank-mid"><label>5. Platz</label><select id="p5" class="vote-select" required><option value="">Wählen...</option></select></div>
+            <div class="rank-mid"><label>6. Platz</label><select id="p6" class="vote-select" required><option value="">Wählen...</option></select></div>
+
+            <button type="submit" id="submitBtn" disabled>Ranking absenden</button>
+        </form>
+    </div>
+</div>
+
+<div class="card hidden success" id="successBox">
+    <div style="font-size: 50px; color: #10b981; margin-bottom: 20px; text-align: center;">✓</div>
+    <h2>Vielen Dank!</h2>
+    <p style="text-align: center;">Ihre Stimme wurde erfolgreich übermittelt.</p>
+</div>
+
+<script>
+    const vortraege = [
+        "Vortrag 1: Titel (Name)",
+        "Vortrag 2: Titel (Name)",
+        "Vortrag 3: Titel (Name)",
+        "Vortrag 4: Titel (Name)",
+        "Vortrag 5: Titel (Name)",
+        "Vortrag 6: Titel (Name)"
+    ];
+
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzDgvp96Fo9UvZ4tgvsWfM6vc6SirET1YMNMHvAjm-9ZW1i6BGkSzqP7u4hjXJCAh8/exec";
+
+    const selects = document.querySelectorAll('.vote-select');
+    const submitBtn = document.getElementById('submitBtn');
+
+    // Initialisierung: Alle Optionen in alle Selects schreiben
+    window.onload = () => {
+        selects.forEach(select => {
+            vortraege.forEach(v => {
+                const opt = document.createElement('option');
+                opt.value = v;
+                opt.text = v;
+                select.appendChild(opt);
+            });
+            select.addEventListener('change', updateDropdowns);
+        });
+    };
+
+    function updateDropdowns() {
+        // 1. Alle aktuell gewählten Werte sammeln
+        const selectedValues = Array.from(selects).map(s => s.value).filter(v => v !== "");
+
+        // 2. Jedes Dropdown durchgehen
+        selects.forEach(select => {
+            const currentValue = select.value;
+            
+            // Alle Optionen innerhalb dieses Dropdowns prüfen
+            Array.from(select.options).forEach(option => {
+                if (option.value === "") return; // "Wählen..." überspringen
+
+                // Wenn der Wert in einem ANDEREN Dropdown gewählt wurde, hier deaktivieren
+                if (selectedValues.includes(option.value) && option.value !== currentValue) {
+                    option.disabled = true;
+                    option.style.display = "none"; // Optional: Verstecken für bessere Übersicht
+                } else {
+                    option.disabled = false;
+                    option.style.display = "block";
+                }
+            });
+        });
+
+        // 3. Button nur aktivieren, wenn alle 6 Plätze eindeutig belegt sind
+        submitBtn.disabled = selectedValues.length !== 6;
+    }
+
+    document.getElementById('votingForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const data = {
+            p1: document.getElementById('p1').value,
+            p2: document.getElementById('p2').value,
+            p3: document.getElementById('p3').value,
+            p4: document.getElementById('p4').value,
+            p5: document.getElementById('p5').value,
+            p6: document.getElementById('p6').value,
+            timestamp: new Date().toISOString()
+        };
+
+        submitBtn.disabled = true;
+        submitBtn.innerText = "Wird gesendet...";
+
+        fetch(WEB_APP_URL, {
+            method: 'POST',
+            mode: 'no-cors',
+            body: JSON.stringify(data)
+        }).then(() => {
+            document.getElementById('formBox').classList.add('hidden');
+            document.getElementById('successBox').classList.remove('hidden');
+        }).catch((err) => {
+            alert("Fehler beim Senden.");
+            submitBtn.disabled = false;
+            submitBtn.innerText = "Ranking absenden";
+        });
+    });
+</script>
+</body>
+</html>
